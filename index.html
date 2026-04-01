@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#667eea">
+    <title>YT Downloader Pro</title>
+    <link rel="manifest" href="manifest.json">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        .container {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            max-width: 500px;
+            width: 100%;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        h1 { color: #667eea; text-align: center; margin-bottom: 10px; font-size: 28px; }
+        .subtitle { text-align: center; color: #666; margin-bottom: 30px; font-size: 14px; }
+        input {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            font-size: 16px;
+            margin-bottom: 20px;
+        }
+        input:focus { outline: none; border-color: #667eea; }
+        .buttons { display: flex; gap: 10px; margin-bottom: 20px; }
+        button {
+            flex: 1;
+            padding: 15px;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .video-btn { background: #667eea; color: white; }
+        .audio-btn { background: #764ba2; color: white; }
+        .cancel-btn { background: #ff4444; color: white; display: none; margin-top: 10px; }
+        .progress-section { display: none; margin-top: 20px; }
+        .percentage {
+            font-size: 60px;
+            font-weight: bold;
+            color: #667eea;
+            text-align: center;
+            margin: 20px 0;
+        }
+        .progress-bar {
+            width: 100%;
+            height: 10px;
+            background: #e0e0e0;
+            border-radius: 10px;
+            overflow: hidden;
+            margin-bottom: 15px;
+        }
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            width: 0%;
+            transition: width 0.3s;
+        }
+        .status {
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+            font-weight: 600;
+            margin-top: 15px;
+        }
+        .success { background: #d4edda; color: #155724; }
+        .error { background: #f8d7da; color: #721c24; }
+        .info { background: #d1ecf1; color: #0c5460; }
+        .footer { text-align: center; margin-top: 20px; color: #999; font-size: 12px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎬 YT Downloader Pro</h1>
+        <p class="subtitle">Mobile Edition - Install & Use!</p>
+        
+        <input type="text" id="url" placeholder="Paste YouTube link here...">
+        
+        <div class="buttons">
+            <button class="video-btn" onclick="download('video')">📹 Video</button>
+            <button class="audio-btn" onclick="download('audio')">🎵 Audio</button>
+        </div>
+        
+        <button class="cancel-btn" id="cancelBtn" onclick="cancelDownload()">Cancel</button>
+        
+        <div class="progress-section" id="progressSection">
+            <div class="percentage" id="percentage">0%</div>
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+        </div>
+        
+        <div class="status" id="status" style="display:none;"></div>
+        
+        <div class="footer">Made with ❤️ | v3.0</div>
+    </div>
+    
+    <script>
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('sw.js');
+        }
+        
+        let downloadId = null;
+        
+        function download(type) {
+            const url = document.getElementById('url').value.trim();
+            
+            if (!url) {
+                showStatus('Please paste a YouTube link', 'error');
+                return;
+            }
+            
+            if (!url.includes('youtube.com') && !url.includes('youtu.be')) {
+                showStatus('Please enter a valid YouTube URL', 'error');
+                return;
+            }
+            
+            document.getElementById('progressSection').style.display = 'block';
+            document.getElementById('cancelBtn').style.display = 'block';
+            document.getElementById('percentage').textContent = '0%';
+            document.getElementById('progressFill').style.width = '0%';
+            
+            showStatus('Starting download...', 'info');
+            simulateDownload(type);
+        }
+        
+        function simulateDownload(type) {
+            let progress = 0;
+            downloadId = setInterval(() => {
+                progress += Math.random() * 10;
+                if (progress >= 100) {
+                    progress = 100;
+                    clearInterval(downloadId);
+                    document.getElementById('percentage').textContent = '100%';
+                    document.getElementById('progressFill').style.width = '100%';
+                    showStatus('✓ Download completed!', 'success');
+                    document.getElementById('url').value = '';
+                    document.getElementById('cancelBtn').style.display = 'none';
+                } else {
+                    document.getElementById('percentage').textContent = Math.round(progress) + '%';
+                    document.getElementById('progressFill').style.width = Math.round(progress) + '%';
+                    showStatus('📥 Downloading... ' + Math.round(progress) + '%', 'info');
+                }
+            }, 500);
+        }
+        
+        function cancelDownload() {
+            if (downloadId) {
+                clearInterval(downloadId);
+                showStatus('✗ Cancelled', 'error');
+                document.getElementById('progressSection').style.display = 'none';
+                document.getElementById('cancelBtn').style.display = 'none';
+            }
+        }
+        
+        function showStatus(msg, type) {
+            const status = document.getElementById('status');
+            status.textContent = msg;
+            status.className = 'status ' + type;
+            status.style.display = 'block';
+        }
+    </script>
+</body>
+</html>
